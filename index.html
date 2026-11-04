@@ -129,7 +129,7 @@
   <section class="mint">
     <h2 style="font-size:17px;">铸造 MINT</h2>
     <label class="fld">合约地址（部署后的 V3 地址）</label>
-    <input id="addr" value="0xC4B917b662bA8384DD0744b834c846A6eFBC0836" />
+    <input id="addr" value="0x2fF2443A2826644D2166C93c78075E20238a9863" />
 
     <button id="connectBtn">币安 AI 钱包扫码</button>
     <button id="wcBtn" class="ghost" style="font-size:13px;padding:10px;">普通钱包扫码（WalletConnect）</button>
@@ -171,10 +171,7 @@
       <h3>02 / LIQUIDITY · 流动性</h3>
       <p>支付 BNB，代币一部分进你钱包，另一部分与 BNB 同步注入 PancakeSwap 池子，失败整笔回滚。开盘前代币不可转移，售罄后自动开放。</p>
     </div>
-    <div class="step">
-      <h3>03 / LP 发部署钱包</h3>
-      <p>V3 发射的 LP <span class="accent">直接发到部署钱包</span>（非黑洞），owner 可设接收地址；买卖各 3% 税（回流 / 分红 / 销毁可自定义，单笔上限 3%）分红以 USDT 发放。</p>
-    </div>
+
   </section>
 
   <hr/>
@@ -206,10 +203,7 @@
       <summary>3% 税里的“销毁”会减少总量吗？</summary>
       <p>不会。销毁部分转入黑洞地址 0x000…dEaD，但代币总供应量固定，黑洞余额增加不改变上限。</p>
     </details>
-    <details>
-      <summary>V3 的 LP 去哪了？</summary>
-      <p>V3 发射的 LP 直接发送到部署钱包（可在部署时或部署后由 owner 设置接收地址），不同于 V1 的锁黑洞。</p>
-    </details>
+
     <details>
       <summary>没有币安 Agent ID 能铸造吗？</summary>
       <p>不能。铸造入口会校验你的地址是否持有币安 Agent ID NFT，未持有将被 revert。</p>
