@@ -275,7 +275,13 @@ async function connectWC(){
       if(uri && typeof uri !== "string") uri = String(uri.uri || uri.data || uri);
       showQr(uri);
     });
-    const accs = await wcProvider.request({ method: "eth_requestAccounts" });
+    // WalletConnect 该构建需先 connect() 建立配对会话，再取账号；request() 直接调会报 "call connect() before request()"
+    let accs;
+    if (typeof wcProvider.connect === "function") {
+      accs = await wcProvider.connect();
+    } else {
+      accs = await wcProvider.request({ method: "eth_requestAccounts" });
+    }
     closeQr();
     eip = wcProvider;
     provider = new ethers.BrowserProvider(wcProvider);
