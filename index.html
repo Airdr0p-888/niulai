@@ -7,7 +7,6 @@
 <title>牛来 NIU LAI · AgentLife V3 铸造</title>
 <link rel="icon" type="image/png" href="avatar.png" />
 <script src="https://unpkg.com/ethers@6.13.2/dist/ethers.umd.min.js"></script>
-<script src="vendor/wc.js"></script>
 <style>
   :root{
     --bg:#0a0b14; --card:rgba(255,255,255,.03); --border:rgba(255,255,255,.12);
@@ -119,7 +118,7 @@
       <div class="stat"><label>单价</label><div class="v" id="vPrice">—</div></div>
       <div class="stat"><label>已铸造 / 上限</label><div class="v" id="vMinted">—</div></div>
       <div class="stat"><label>我的已铸造</label><div class="v" id="vMy">—</div></div>
-      <div class="stat"><label>买卖税</label><div class="v">3% 可配</div></div>
+      <div class="stat"><label>买卖税</label><div class="v">3% 全销毁</div></div>
     </div>
   </section>
 
@@ -129,11 +128,9 @@
   <section class="mint">
     <h2 style="font-size:17px;">铸造 MINT</h2>
     <label class="fld">合约地址（部署后的 V3 地址）</label>
-    <input id="addr" value="0x2fF2443A2826644D2166C93c78075E20238a9863" />
+    <input id="addr" value="0x813ce8ca8a533CEA578e01145457f8d5FFd7bCEa" />
 
     <button id="connectBtn">币安 AI 钱包扫码</button>
-    <button id="wcBtn" class="ghost" style="font-size:13px;padding:10px;">普通钱包扫码（WalletConnect）</button>
-    <button id="injectedBtn" class="ghost" style="font-size:13px;padding:10px;">浏览器插件钱包（备用）</button>
 
     <label class="fld">铸造份数</label>
     <input id="shares" type="number" min="1" value="1" />
@@ -225,7 +222,6 @@
 </div>
 
 <script>
-const WC_PID = "d1d20d01deca8b04d0c243954db38bd8";
 const CHAIN_ID = 56;
 const ZERO = "0x0000000000000000000000000000000000000000";
 const BNB_DEC = 18n;
@@ -254,59 +250,7 @@ async function switchToBSC(){
   catch(e){ if(e.code===4902) await window.ethereum.request({ method:"wallet_addEthereumChain", params:[{chainId:"0x38", chainName:"BNB Smart Chain", rpcUrls:["https://bsc-dataseed.bnbchain.org"], nativeCurrency:{name:"BNB",symbol:"BNB",decimals:18}, blockExplorerUrls:["https://bscscan.com"]}] }); else throw e; }
 }
 
-async function connect(){
-  await connectWC();
-}
-
-// 备用：浏览器插件钱包（币安钱包插件 / MetaMask 等）
-async function connectInjected(){
-  if(!window.ethereum) return log("未检测到浏览器钱包插件", "err");
-  try {
-    await switchToBSC();
-    eip = window.ethereum;
-    provider = new ethers.BrowserProvider(eip);
-    await provider.send("eth_requestAccounts", []);
-    signer = await provider.getSigner();
-    account = await signer.getAddress();
-    onConnected();
-    await load();
-  } catch(e){ log("连接失败：" + (e.reason || e.message), "err"); }
-}
-
-async function connectWC(){
-  const W = window.WCMint;
-  if(!W || !W.EthereumProvider) return log("扫码组件未加载（vendor/wc.js）", "err");
-  log("正在生成二维码…");
-  try {
-    wcProvider = await W.EthereumProvider.init({
-      projectId: WC_PID, chains: [CHAIN_ID], optionalChains: [CHAIN_ID], showQrModal: false,
-      methods: ["eth_sendTransaction","eth_requestAccounts","eth_accounts","eth_chainId","wallet_switchEthereumChain"],
-      events: ["chainChanged","accountsChanged"],
-    });
-    wcProvider.on("display_uri", (arg) => {
-      let uri = typeof arg === "string" ? arg : (arg && (arg.uri || arg.data || arg.params)) || "";
-      if(uri && typeof uri !== "string") uri = String(uri.uri || uri.data || uri);
-      showQr(uri);
-    });
-    // WalletConnect 该构建需先 connect() 建立配对会话，再取账号；request() 直接调会报 "call connect() before request()"
-    let accs;
-    if (typeof wcProvider.connect === "function") {
-      accs = await wcProvider.connect();
-    } else {
-      accs = await wcProvider.request({ method: "eth_requestAccounts" });
-    }
-    closeQr();
-    eip = wcProvider;
-    provider = new ethers.BrowserProvider(wcProvider);
-    signer = await provider.getSigner();
-    account = accs[0] || await signer.getAddress();
-    onConnected();
-    await load();
-  } catch(e){
-    closeQr();
-    log("扫码连接失败：" + (e.reason || e.message || e), "err");
-  }
-}
+// 注：普通钱包扫码（WalletConnect）与浏览器插件钱包两个入口已移除，仅保留「币安 AI 钱包扫码」。
 
 const RPCS = [
   "https://bsc-dataseed.bnbchain.org",
@@ -513,8 +457,6 @@ function copy(text){
 }
 
 $("connectBtn").onclick = connectAgentic;
-$("wcBtn").onclick = connectWC;
-$("injectedBtn").onclick = connectInjected;
 $("copyAi").onclick = () => copy($("aiCmd").value);
 $("qrCancel").onclick = () => { qrAborted = true; closeQr(); };
 updateAi();
