@@ -441,7 +441,7 @@ async function load(){
   const a = $("addr").value.trim();
   if(!ethers.isAddress(a)) return log("请先填写有效的合约地址", "err");
   $("addrShow").textContent = a;
-  const p = provider || (readOnly = readOnly || new ethers.JsonRpcProvider(RPC));
+  const p = signer || provider || (readOnly = readOnly || new ethers.JsonRpcProvider(RPC));
   contract = new ethers.Contract(a, ABI, p);
   try {
     const [price, cap, minted, myShares, nftAddr] = await Promise.all([
