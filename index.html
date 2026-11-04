@@ -120,6 +120,8 @@
       <div class="stat"><label>单价</label><div class="v" id="vPrice">—</div></div>
       <div class="stat"><label>已铸造 / 上限</label><div class="v" id="vMinted">—</div></div>
       <div class="stat"><label>我的已铸造</label><div class="v" id="vMy">—</div></div>
+      <div class="stat"><label>总币量</label><div class="v" id="vTotal">—</div></div>
+      <div class="stat"><label>单份币量</label><div class="v" id="vPerShare">—</div></div>
       <div class="stat"><label>买卖税</label><div class="v">3% 全销毁</div></div>
     </div>
   </section>
@@ -237,7 +239,9 @@ const ABI = [
   "function totalSharesMinted() view returns (uint256)",
   "function mintedShares(address) view returns (uint256)",
   "function agentIdNft() view returns (address)",
-  "function balanceOf(address) view returns (uint256)"
+  "function balanceOf(address) view returns (uint256)",
+  "function totalSupply() view returns (uint256)",
+  "function mintTokensPerShare() view returns (uint256)"
 ];
 const NFT_ABI = ["function balanceOf(address) view returns (uint256)"];
 
@@ -384,15 +388,18 @@ async function load(){
   const p = signer || provider || (readOnly = readOnly || new ethers.JsonRpcProvider(RPC));
   contract = new ethers.Contract(a, ABI, p);
   try {
-    const [price, cap, minted, myShares, nftAddr] = await Promise.all([
+    const [price, cap, minted, myShares, nftAddr, ts, per] = await Promise.all([
       contract.mintPrice(), contract.totalSharesCap(), contract.totalSharesMinted(),
-      contract.mintedShares(account||ZERO), contract.agentIdNft()
+      contract.mintedShares(account||ZERO), contract.agentIdNft(),
+      contract.totalSupply(), contract.mintTokensPerShare()
     ]);
     const priceBnb = ethers.formatUnits(price, BNB_DEC);
     $("vPrice").textContent = priceBnb + " BNB";
     mintPriceVal = price;
     $("vMinted").textContent = minted.toString() + " / " + cap.toString();
     $("vMy").textContent = myShares.toString();
+    $("vTotal").textContent = ethers.formatUnits(ts, BNB_DEC) + " 枚";
+    $("vPerShare").textContent = ethers.formatUnits(per, BNB_DEC) + " 枚/份";
     updateAi();
     if(account){
       const nft = new ethers.Contract(nftAddr, NFT_ABI, p);
@@ -470,6 +477,8 @@ $("copyNft").onclick = () => copy("0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F");
 window.ethereum && window.ethereum.on && window.ethereum.on("accountsChanged", () => location.reload());
 // 打开页面即按默认合约地址拉取链上数据（只读，无需连钱包）
 if($("addr").value.trim()) load();
+// 每 12 秒自动刷新链上数据（单价/进度/总量/单份币量等），无需手动操作
+setInterval(load, 12000);
 </script>
 </body>
 </html>
