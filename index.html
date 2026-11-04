@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>牛来 NIU LAI · AgentLife V3 铸造</title>
+<link rel="icon" type="image/png" href="avatar.png" />
 <script src="https://unpkg.com/ethers@6.13.2/dist/ethers.umd.min.js"></script>
 <script src="vendor/wc.js"></script>
 <style>
@@ -23,7 +24,8 @@
 
   /* Hero */
   .hero{text-align:center;}
-  .bull{font-size:56px;filter:drop-shadow(0 6px 16px rgba(22,199,132,.45));}
+  .avatar{width:120px;height:120px;border-radius:50%;object-fit:cover;object-position:center 30%;
+          border:2px solid var(--accent);box-shadow:0 6px 20px rgba(22,199,132,.35);}
   .brand{font-size:30px;font-weight:800;letter-spacing:.5px;}
   .brand small{display:block;font-size:13px;letter-spacing:4px;color:var(--muted);font-weight:600;margin-top:4px;}
   .slogan{color:var(--muted);margin:10px 0 14px;font-size:15px;}
@@ -89,7 +91,7 @@
 
   <!-- Hero -->
   <section class="hero">
-    <div class="bull">🐂</div>
+    <img class="avatar" src="avatar.png" alt="牛来 NIU LAI" />
     <div class="brand">牛来 NIU LAI<small>AGENTLIFE V3 · BNB CHAIN</small></div>
     <p class="slogan">牛市来了 — 持有币安 Agent ID，即可铸造</p>
     <span class="badge">BNB Smart Chain · 连接币安钱包 / 扫码</span>
@@ -122,7 +124,8 @@
     <label class="fld">合约地址（部署后的 V3 地址）</label>
     <input id="addr" value="0xC4B917b662bA8384DD0744b834c846A6eFBC0836" />
 
-    <button id="connectBtn">连接币安钱包 / 扫码</button>
+    <button id="connectBtn">币安 App 扫码连接</button>
+    <button id="injectedBtn" class="ghost" style="font-size:13px;padding:10px;">或使用浏览器钱包（备用）</button>
 
     <label class="fld">铸造份数</label>
     <input id="shares" type="number" min="1" placeholder="例如 10" />
@@ -238,19 +241,23 @@ async function switchToBSC(){
 }
 
 async function connect(){
-  if(window.ethereum){
-    try {
-      await switchToBSC();
-      eip = window.ethereum;
-      provider = new ethers.BrowserProvider(eip);
-      await provider.send("eth_requestAccounts", []);
-      signer = await provider.getSigner();
-      account = await signer.getAddress();
-      onConnected();
-      return await load();
-    } catch(e){ /* 走扫码 */ }
-  }
+  // 默认：币安 App 扫码（WalletConnect），不再优先用浏览器插件钱包
   await connectWC();
+}
+
+// 备用：浏览器插件钱包（币安钱包插件 / MetaMask 等）
+async function connectInjected(){
+  if(!window.ethereum) return log("未检测到浏览器钱包插件", "err");
+  try {
+    await switchToBSC();
+    eip = window.ethereum;
+    provider = new ethers.BrowserProvider(eip);
+    await provider.send("eth_requestAccounts", []);
+    signer = await provider.getSigner();
+    account = await signer.getAddress();
+    onConnected();
+    await load();
+  } catch(e){ log("连接失败：" + (e.reason || e.message), "err"); }
 }
 
 async function connectWC(){
@@ -355,6 +362,7 @@ function copy(text){
 }
 
 $("connectBtn").onclick = connect;
+$("injectedBtn").onclick = connectInjected;
 $("addr").onchange = () => { if(account) load(); else load(); };
 $("shares").oninput = updateCost;
 $("mintBtn").onclick = doMint;
