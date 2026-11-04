@@ -83,6 +83,10 @@
   .modal-box h3{font-size:16px;margin-bottom:12px;}
   .qr{width:240px;height:240px;margin:0 auto;background:#fff;border-radius:10px;padding:8px;}
   .qr svg{width:100%;height:100%;}
+  .pair{font-size:14px;margin:12px 0 2px;}
+  .pair b{color:var(--accent);letter-spacing:2px;font-family:"Roboto Mono",Menlo,monospace;}
+  .openBtn{display:block;background:#F0B90B;color:#111;font-weight:700;text-align:center;
+           border-radius:10px;padding:12px;margin-top:12px;text-decoration:none;font-size:15px;}
   .modal-box .hint{font-size:12px;color:var(--muted);margin:12px 0 0;}
 </style>
 </head>
@@ -205,7 +209,9 @@
   <div class="modal-box">
     <h3>币安 App 扫码登录</h3>
     <div id="qrBox" class="qr"></div>
-    <p class="hint">用币安 App 扫上方二维码，确认配对码一致后授权连接。</p>
+    <p class="hint pair">配对码：<b id="awPair">——</b></p>
+    <p class="hint">用币安 App 扫上方二维码，核对配对码一致后确认登录。</p>
+    <a id="wcOpen" class="openBtn" href="#" target="_blank" rel="noopener">打开币安登录</a>
     <button id="qrCancel" class="ghost">取消</button>
   </div>
 </div>
@@ -296,10 +302,20 @@ async function connectWC(){
 }
 
 function showQr(uri){
+  const ok = typeof uri === "string" && uri.indexOf("wc:") === 0;
   const box = $("qrBox");
-  if(window.WCMint && window.WCMint.qrSvg && uri){ try { box.innerHTML = window.WCMint.qrSvg(uri); } catch { box.textContent = uri; } }
+  if(ok && window.WCMint && window.WCMint.qrSvg){ try { box.innerHTML = window.WCMint.qrSvg(uri); } catch { box.textContent = uri; } }
   else box.textContent = uri;
+  // 配对码：取 WC 连接串 topic 前 6 位大写，币安 App 端会显示同样的码供比对
+  const tm = ok ? uri.match(/^wc:([0-9a-fA-F]+)@/) : null;
+  $("awPair").textContent = tm ? tm[1].slice(0,6).toUpperCase() : "——";
+  const open = $("wcOpen");
+  open.href = ok ? "https://walletconnect.com/wc?uri=" + encodeURIComponent(uri) : "#";
   $("qrModal").classList.remove("hidden");
+  // 手机浏览器：自动开新标签唤起币安 App 授权
+  if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) && ok){
+    try { window.open(open.href, "_blank"); } catch {}
+  }
 }
 function closeQr(){
   $("qrModal").classList.add("hidden");
